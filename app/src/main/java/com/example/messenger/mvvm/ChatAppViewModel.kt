@@ -48,4 +48,56 @@ class ChatAppViewModel : ViewModel() {
             }
     }
 
+    // gửi tin nhắn
+    fun sendMessage(sender: String, receiver: String, friendname: String, friendimage: String) =
+        viewModelScope.launch(Dispatchers.IO) {
+            val context = MyApplication.instance.applicationContext
+
+            val hashMap = hashMapOf<String, Any>(
+                "sender" to sender,
+                "receiver" to receiver,
+                "message" to message.value!!,
+                "time" to Utils.getTime()
+            )
+
+            val uniqueId = listOf(sender, receiver).sorted()
+            uniqueId.joinToString(separator = "")
+
+
+            val friendnamesplit = friendname.split("\\s".toRegex())[0]
+            val mysharedPrefs = SharedPrefs(context)
+            mysharedPrefs.setValue("friendid", receiver)
+            mysharedPrefs.setValue("chatroomid", uniqueId.toString())
+            mysharedPrefs.setValue("friendname", friendnamesplit)
+            mysharedPrefs.setValue("friendimage", friendimage)
+
+            firestore.collection("Messages").document(uniqueId.toString()).collection("chats")
+                .document(Utils.getTime()).set(hashMap).addOnCompleteListener { task ->
+
+                    val hashMapForRecent = hashMapOf<String, Any>(
+                        "friendid" to receiver,
+                        "time" to Utils.getTime(),
+                        "sender" to Utils.getUiLoggedIn(),
+                        "message" to message.value!!,
+                        "friendimage" to friendimage,
+                        "name" to friendname,
+                        "person" to "you"
+                    )
+
+                    firestore.collection("Conversation${Utils.getUiLoggedIn()}").document(receiver)
+                        .set(hashMapForRecent)
+
+                    firestore.collection("Conversation${receiver}").document(Utils.getUiLoggedIn())
+                        .update(
+                            "message",
+                            message.value!!,
+                            "time",
+                            Utils.getTime(),
+                            "person",
+                            name.value!!
+                        )
+
+                }
+        }
+
 }

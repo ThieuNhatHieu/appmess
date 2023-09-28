@@ -84,9 +84,8 @@ class SignInActivity : AppCompatActivity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         super.onBackPressed()
-
         pds.dismiss()
-        finish()
+        finishAffinity() // kết thúc toàn bộ Activity trong ngăn xếp
     }
     override fun onDestroy() {
         super.onDestroy()

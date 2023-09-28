@@ -26,6 +26,7 @@ import com.example.messenger.mvvm.ChatAppViewModel
 import com.google.firebase.auth.FirebaseAuth
 import de.hdodenhof.circleimageview.CircleImageView
 import androidx.appcompat.widget.Toolbar
+import androidx.navigation.findNavController
 import com.example.messenger.SignInActivity
 
 @Suppress("DEPRECATION")
@@ -72,9 +73,10 @@ class HomeFragment : Fragment(), OnUserClickListener {
 
         userViewModel.getUsers().observe(viewLifecycleOwner, Observer {
             userAdapter.setList(it)
-            userAdapter.setOnClickListener(this)
             rvUsers.adapter = userAdapter
         })
+
+        userAdapter.setOnClickListener(this)
 
         homeBinding.logOut.setOnClickListener {
 
@@ -90,6 +92,8 @@ class HomeFragment : Fragment(), OnUserClickListener {
 
     override fun onUserSelected(position: Int, users: Users) {
 
+        val action = HomeFragmentDirections.actionHomeFragmentToChatFragment(users)
+        view?.findNavController()?.navigate(action)
     }
 
 
