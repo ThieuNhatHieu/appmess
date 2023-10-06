@@ -1,20 +1,26 @@
 package com.example.messenger.fragments
 
+import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.messenger.R
 import com.example.messenger.Utils.Utils
+import com.example.messenger.adapter.MessageAdapter
 import com.example.messenger.databinding.FragmentChatBinding
+import com.example.messenger.modal.Messages
 import com.example.messenger.mvvm.ChatAppViewModel
 import de.hdodenhof.circleimageview.CircleImageView
 
@@ -28,6 +34,8 @@ class ChatFragment : Fragment() {
     private lateinit var tvUserName : TextView
     private lateinit var tvStatus : TextView
     private lateinit var backbtn : ImageView
+    private lateinit var messageAdapter: MessageAdapter
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -68,6 +76,22 @@ class ChatFragment : Fragment() {
 
 
         }
+
+        chatAppViewModel.getMessages(args.users.userid!!).observe(viewLifecycleOwner, Observer {
+
+
+            initRecycleView(it)
+        })
+    }
+
+    private fun initRecycleView(it: List<Messages>) {
+        messageAdapter = MessageAdapter()
+        val layoutManager = LinearLayoutManager(context)
+        chatBinding.messagesRecyclerView.layoutManager = layoutManager
+        layoutManager.stackFromEnd = true
+        messageAdapter.setMessageList(it)
+        messageAdapter.notifyDataSetChanged()
+        chatBinding.messagesRecyclerView.adapter = messageAdapter
     }
 
 }

@@ -13,7 +13,7 @@ class UsersRepo {
     fun getUsers(): LiveData<List<Users>>{
         val users = MutableLiveData<List<Users>>()
 
-        firestore.collection("Users").addSnapshotListener{snapshot, exception ->
+        firestore. collection("Users").addSnapshotListener{snapshot, exception ->
 
             if (exception != null){
                 return@addSnapshotListener

@@ -1,5 +1,6 @@
 package com.example.messenger.mvvm
 
+import android.view.textclassifier.ConversationActions.Message
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -7,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.messenger.MyApplication
 import com.example.messenger.SharedPrefs
 import com.example.messenger.Utils.Utils
+import com.example.messenger.modal.Messages
+import com.example.messenger.modal.RecentChats
 import com.example.messenger.modal.Users
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +23,8 @@ class ChatAppViewModel : ViewModel() {
     val firestore = FirebaseFirestore.getInstance()
 
     val usersRepo = UsersRepo()
-
+    val messageRepo = MessageRepo()
+    val recentChatRepo = ChatListRepo()
 
     init {
         getCurrentUser()
@@ -96,8 +100,19 @@ class ChatAppViewModel : ViewModel() {
                             "person",
                             name.value!!
                         )
-
+                    if (task.isSuccessful){
+                        message.value = ""
+                    }
                 }
         }
+
+    fun getMessages(friendid: String): LiveData<List<Messages>>{
+
+            return messageRepo.getMessages(friendid)
+    }
+
+    fun getRecentChats(): LiveData<List<RecentChats>>{
+        return recentChatRepo.getAllChatList()
+    }
 
 }
