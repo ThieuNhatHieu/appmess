@@ -1,10 +1,12 @@
 package com.example.messenger.mvvm
 
 import android.view.textclassifier.ConversationActions.Message
+import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bumptech.glide.util.Util
 import com.example.messenger.MyApplication
 import com.example.messenger.SharedPrefs
 import com.example.messenger.Utils.Utils
@@ -28,6 +30,7 @@ class ChatAppViewModel : ViewModel() {
 
     init {
         getCurrentUser()
+        getRecentChats()
     }
 
     fun getUsers(): LiveData<List<Users>> {
@@ -113,6 +116,34 @@ class ChatAppViewModel : ViewModel() {
 
     fun getRecentChats(): LiveData<List<RecentChats>>{
         return recentChatRepo.getAllChatList()
+    }
+
+    fun updateProfile() = viewModelScope.launch(Dispatchers.IO){
+
+        val context = MyApplication.instance.applicationContext
+
+        val hashMapUser = hashMapOf<String, Any>("username" to name.value!!, "imageUrl" to imageUrl.value!!)
+
+        firestore.collection("Users").document(Utils.getUiLoggedIn()).update(hashMapUser).addOnCompleteListener { task->
+
+
+            if (task.isSuccessful){
+
+                Toast.makeText(context, "UPDATED", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        val mySharedPrefs = SharedPrefs(context)
+        val friendid = mySharedPrefs.getValue("friendid")
+
+        val hashMapUpdate = hashMapOf<String, Any>("friendimage" to imageUrl.value!!, "name" to name.value!!, "person" to name.value!!)
+
+        if (friendid != null){
+            firestore.collection("Conversation${friendid}").document(Utils.getUiLoggedIn()).update(hashMapUpdate)
+
+            firestore.collection("Conversation${Utils.getUiLoggedIn()}").document(friendid!!).update("person", "you")
+        }
+
     }
 
 }

@@ -11,6 +11,9 @@ class Utils {
         private val auth = FirebaseAuth.getInstance()
         private var userid: String = ""
 
+        const val REQUEST_IMAGE_CAPTURE = 1
+        const val REQUEST_IMAGE_PICK = 2
+
         fun getUiLoggedIn(): String {
             if (auth.currentUser != null) {
                 userid = auth.currentUser!!.uid

@@ -98,6 +98,11 @@ class HomeFragment : Fragment(), OnUserClickListener, onRecentChatClicked {
         })
 
         recentChatAdapter.setOnRecentChatListener(this)
+
+        circleImageView.setOnClickListener{
+
+            view?.findNavController()?.navigate(R.id.action_homeFragment_to_settingFragment)
+        }
     }
 
     override fun onUserSelected(position: Int, users: Users) {
