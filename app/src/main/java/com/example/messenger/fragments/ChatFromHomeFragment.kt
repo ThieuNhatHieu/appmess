@@ -1,6 +1,7 @@
 package com.example.messenger.fragments
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -35,6 +36,8 @@ class ChatFromHomeFragment : Fragment() {
     private lateinit var tvStatus: TextView
     private lateinit var backbtn: ImageView
     private lateinit var messageAdapter: MessageAdapter
+    private var stickerUrl: String? = null
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -69,16 +72,46 @@ class ChatFromHomeFragment : Fragment() {
         chatfromHomeBinding.viewModel = chatAppViewModel
         chatfromHomeBinding.lifecycleOwner = viewLifecycleOwner
 
+//        chatfromHomeBinding.sendBtn.setOnClickListener {
+//            chatAppViewModel.sendMessage(
+//                Utils.getUiLoggedIn(),
+//                args.recentchats.friendid!!,
+//                args.recentchats.name!!,
+//                args.recentchats.friendimage!!
+//            )
+//
+//
+//        }
+
         chatfromHomeBinding.sendBtn.setOnClickListener {
-            chatAppViewModel.sendMessage(
-                Utils.getUiLoggedIn(),
-                args.recentchats.friendid!!,
-                args.recentchats.name!!,
-                args.recentchats.friendimage!!
-            )
+            val messageContent = chatfromHomeBinding.editTextMessage.text.toString()
+            if (stickerUrl != null && stickerUrl!!.isNotEmpty()) {
+                // Nếu stickerUrl không rỗng, người dùng đã chọn gửi sticker
+                chatAppViewModel.sendMessage(
+                    Utils.getUiLoggedIn(),
+                    args.recentchats.friendid!!,
+                    args.recentchats.name!!,
+                    args.recentchats.friendimage!!,
+                    stickerUrl!!,
+                    "sticker" // Đặt loại tin nhắn là "sticker"
+                )
+            } else if (messageContent.isNotEmpty()) {
+                // Nếu messageContent không rỗng, người dùng đã chọn gửi tin nhắn văn bản
 
-
+                chatAppViewModel.sendMessage(
+                    Utils.getUiLoggedIn(),
+                    args.recentchats.friendid!!,
+                    args.recentchats.name!!,
+                    args.recentchats.friendimage!!,
+                    messageContent,
+                    "text" // Đặt loại tin nhắn là "text"
+                )
+            }
         }
+        fun setStickerUrl(url: String) {
+            stickerUrl = url
+        }
+
 
         chatAppViewModel.getMessages(args.recentchats.friendid!!)
             .observe(viewLifecycleOwner, Observer {

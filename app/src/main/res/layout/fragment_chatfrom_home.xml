@@ -111,7 +111,7 @@
             android:minHeight="48dp"
             android:orientation="horizontal">
 
-            <EditText
+            <com.example.messenger.MyEditText
                 android:id="@+id/editTextMessage"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

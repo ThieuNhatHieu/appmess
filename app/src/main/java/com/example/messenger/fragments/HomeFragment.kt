@@ -22,7 +22,11 @@ import com.google.firebase.auth.FirebaseAuth
 import de.hdodenhof.circleimageview.CircleImageView
 import androidx.appcompat.widget.Toolbar
 import androidx.navigation.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
+import com.example.messenger.MyApplication
+import com.example.messenger.SharedPrefs
 import com.example.messenger.SignInActivity
+import com.example.messenger.Utils.Utils
 import com.example.messenger.adapter.RecentChatAdapter
 import com.example.messenger.adapter.onRecentChatClicked
 import com.example.messenger.modal.RecentChats
@@ -99,10 +103,37 @@ class HomeFragment : Fragment(), OnUserClickListener, onRecentChatClicked {
 
         recentChatAdapter.setOnRecentChatListener(this)
 
-        circleImageView.setOnClickListener{
+        circleImageView.setOnClickListener {
 
             view?.findNavController()?.navigate(R.id.action_homeFragment_to_settingFragment)
         }
+
+        // thêm item touch helper để xử lý vuốt để xóa tin nhắn gần đây
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder,
+            ): Boolean {
+                return false // không cho phép di chuyển item
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                // lấy vị trí của item đã vuốt
+                val position = viewHolder.adapterPosition
+                // lấy id của người nhận tin nhắn từ adapter
+                val receiverId = recentChatAdapter.getItemAtPosition(position).friendid!!
+                // gọi hàm xóa tin nhắn từ view model
+                userViewModel.deleteMessage(Utils.getUiLoggedIn(), receiverId)
+                // xóa item khỏi adapter
+                userViewModel.deleteMessage(receiverId, Utils.getUiLoggedIn())
+                recentChatAdapter.removeChat(position)
+            }
+        })
+
+        // Gắn ItemTouchHelper vào RecyclerView cho tin nhắn gần đây
+        itemTouchHelper.attachToRecyclerView(homeBinding.rvRecentChats)
+
     }
 
     override fun onUserSelected(position: Int, users: Users) {

@@ -23,6 +23,8 @@ class ChatAppViewModel : ViewModel() {
     val name = MutableLiveData<String>()
     val imageUrl = MutableLiveData<String>()
     val firestore = FirebaseFirestore.getInstance()
+    val stickerUrl = MutableLiveData<String>()
+
 
     val usersRepo = UsersRepo()
     val messageRepo = MessageRepo()
@@ -44,7 +46,7 @@ class ChatAppViewModel : ViewModel() {
 
         firestore.collection("Users").document(Utils.getUiLoggedIn())
             .addSnapshotListener { value, error ->
-                if (value!!.exists() && value != null) {
+                if (value != null && value.exists()) {
                     val users = value.toObject(Users::class.java)
                     name.value = users?.username!!
                     imageUrl.value = users?.imageUrl!!
@@ -56,20 +58,73 @@ class ChatAppViewModel : ViewModel() {
     }
 
     // gửi tin nhắn
-    fun sendMessage(sender: String, receiver: String, friendname: String, friendimage: String) =
+//    fun sendMessage(sender: String, receiver: String, friendname: String, friendimage: String) =
+//        viewModelScope.launch(Dispatchers.IO) {
+//            val context = MyApplication.instance.applicationContext
+//
+//            val hashMap = hashMapOf<String, Any>(
+//                "sender" to sender,
+//                "receiver" to receiver,
+//                "message" to message.value!!,
+//                "time" to Utils.getTime()
+//            )
+//
+//            val uniqueId = listOf(sender, receiver).sorted()
+//            uniqueId.joinToString(separator = "")
+//
+//
+//            val friendnamesplit = friendname.split("\\s".toRegex())[0]
+//            val mysharedPrefs = SharedPrefs(context)
+//            mysharedPrefs.setValue("friendid", receiver)
+//            mysharedPrefs.setValue("chatroomid", uniqueId.toString())
+//            mysharedPrefs.setValue("friendname", friendnamesplit)
+//            mysharedPrefs.setValue("friendimage", friendimage)
+//
+//            firestore.collection("Messages").document(uniqueId.toString()).collection("chats")
+//                .document(Utils.getTime()).set(hashMap).addOnCompleteListener { task ->
+//
+//                    val hashMapForRecent = hashMapOf<String, Any>(
+//                        "friendid" to receiver,
+//                        "time" to Utils.getTime(),
+//                        "sender" to Utils.getUiLoggedIn(),
+//                        "message" to message.value!!,
+//                        "friendimage" to friendimage,
+//                        "name" to friendname,
+//                        "person" to "you"
+//                    )
+//
+//                    firestore.collection("Conversation${Utils.getUiLoggedIn()}").document(receiver)
+//                        .set(hashMapForRecent)
+//
+//                    firestore.collection("Conversation${receiver}").document(Utils.getUiLoggedIn())
+//                        .update(
+//                            "message",
+//                            message.value!!,
+//                            "time",
+//                            Utils.getTime(),
+//                            "person",
+//                            name.value!!
+//                        )
+//                    if (task.isSuccessful){
+//                        message.value = ""
+//                    }
+//                }
+//        }
+
+    fun sendMessage(sender: String, receiver: String, friendname: String, friendimage: String, messageContent: String, messageType: String) =
         viewModelScope.launch(Dispatchers.IO) {
             val context = MyApplication.instance.applicationContext
 
-            val hashMap = hashMapOf<String, Any>(
+            val hashMap = hashMapOf(
                 "sender" to sender,
                 "receiver" to receiver,
-                "message" to message.value!!,
+                "message" to messageContent,
+                "messageType" to messageType, // Loại tin nhắn: "text" hoặc "sticker"
                 "time" to Utils.getTime()
             )
 
             val uniqueId = listOf(sender, receiver).sorted()
             uniqueId.joinToString(separator = "")
-
 
             val friendnamesplit = friendname.split("\\s".toRegex())[0]
             val mysharedPrefs = SharedPrefs(context)
@@ -81,11 +136,12 @@ class ChatAppViewModel : ViewModel() {
             firestore.collection("Messages").document(uniqueId.toString()).collection("chats")
                 .document(Utils.getTime()).set(hashMap).addOnCompleteListener { task ->
 
-                    val hashMapForRecent = hashMapOf<String, Any>(
+                    val hashMapForRecent = hashMapOf(
                         "friendid" to receiver,
                         "time" to Utils.getTime(),
                         "sender" to Utils.getUiLoggedIn(),
-                        "message" to message.value!!,
+                        "message" to messageContent,
+                        "messageType" to messageType, // Loại tin nhắn: "text" hoặc "sticker"
                         "friendimage" to friendimage,
                         "name" to friendname,
                         "person" to "you"
@@ -97,21 +153,26 @@ class ChatAppViewModel : ViewModel() {
                     firestore.collection("Conversation${receiver}").document(Utils.getUiLoggedIn())
                         .update(
                             "message",
-                            message.value!!,
+                            messageContent,
                             "time",
                             Utils.getTime(),
                             "person",
-                            name.value!!
+                            friendname
                         )
-                    if (task.isSuccessful){
+                    if (task.isSuccessful) {
                         message.value = ""
                     }
                 }
         }
 
+    fun setStickerUrl(url: String) {
+        stickerUrl.value = url
+    }
+
+
     fun getMessages(friendid: String): LiveData<List<Messages>>{
 
-            return messageRepo.getMessages(friendid)
+        return messageRepo.getMessages(friendid)
     }
 
     fun getRecentChats(): LiveData<List<RecentChats>>{
@@ -145,5 +206,36 @@ class ChatAppViewModel : ViewModel() {
         }
 
     }
+
+    // xóa tin nhắn
+    fun deleteMessage(sender: String, receiver: String) =
+        viewModelScope.launch(Dispatchers.IO) {
+            // tạo id duy nhất cho cuộc trò chuyện giữa sender và receiver
+            val uniqueId = listOf(sender, receiver).sorted()
+            uniqueId.joinToString(separator = "")
+
+            // xóa dữ liệu trong collection Messages cho sender
+            firestore.collection("Messages").document(uniqueId.toString()).collection("chats")
+                .whereEqualTo("sender", sender).get().addOnSuccessListener { querySnapshot ->
+                    for (document in querySnapshot.documents) {
+                        document.reference.delete()
+                    }
+                }
+
+            // xóa dữ liệu trong collection Conversation cho sender
+            firestore.collection("Conversation${sender}").document(receiver).delete()
+
+            // xóa dữ liệu trong collection Messages cho receiver
+            firestore.collection("Messages").document(uniqueId.toString()).collection("chats")
+                .whereEqualTo("receiver", receiver).get().addOnSuccessListener { querySnapshot ->
+                    for (document in querySnapshot.documents) {
+                        document.reference.delete()
+                    }
+                }
+
+            // xóa dữ liệu trong collection Conversation cho receiver
+            firestore.collection("Conversation${receiver}").document(sender).delete()
+
+        }
 
 }

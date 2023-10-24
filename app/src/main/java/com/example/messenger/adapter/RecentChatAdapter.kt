@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.messenger.MyApplication
 import com.example.messenger.R
 import com.example.messenger.modal.RecentChats
 import de.hdodenhof.circleimageview.CircleImageView
@@ -15,6 +16,7 @@ class RecentChatAdapter : RecyclerView.Adapter<RecentChatHolder>() {
     private var listofchats = listOf<RecentChats>()
     private var listener: onRecentChatClicked? = null
     private var recentModal = RecentChats()
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecentChatHolder {
         val view =
             LayoutInflater.from(parent.context).inflate(R.layout.recentchatlist, parent, false)
@@ -26,6 +28,7 @@ class RecentChatAdapter : RecyclerView.Adapter<RecentChatHolder>() {
     }
 
     override fun onBindViewHolder(holder: RecentChatHolder, position: Int) {
+
         val recentchatlist = listofchats[position]
         recentModal = recentchatlist
 
@@ -42,6 +45,18 @@ class RecentChatAdapter : RecyclerView.Adapter<RecentChatHolder>() {
         holder.itemView.setOnClickListener {
             listener?.getOnRecentChatClicked(position, recentchatlist)
         }
+
+    }
+
+    fun removeChat(position: Int) {
+        val removedChat = listofchats[position]
+        listofchats = listofchats.filter { it.friendid != removedChat.friendid }
+        notifyItemRemoved(position)
+    }
+
+
+    fun getItemAtPosition(position: Int): RecentChats {
+        return listofchats[position]
     }
 
     fun setOnRecentChatListener(listener: onRecentChatClicked) {
@@ -50,6 +65,7 @@ class RecentChatAdapter : RecyclerView.Adapter<RecentChatHolder>() {
 
     fun setOnRecentList(list: List<RecentChats>) {
         this.listofchats = list
+        
     }
 }
 
